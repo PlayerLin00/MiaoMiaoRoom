@@ -1,0 +1,11 @@
+# UE5 .gitignore
+
+# Binaries
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Build files
+Build/
+
