@@ -3,7 +3,6 @@
 
 #include "PyInterSubSystem.h"
 #include "Engine/Engine.h"
-//#include "WebSocketsModule.h"
 #include "WebSocketsModule.h"
 #include "IWebSocket.h"
 void UPyInterSubSystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -35,7 +34,8 @@ void UPyInterSubSystem::ConnectWebSocket(const FString& ServerURL)
 	}
 
 	// Create WebSocket using correct UE5.5 API from documentation
-	WebSocket = FWebSocketsModule::Get().CreateWebSocket(ServerURL, TEXT("ws"));
+	FString ServerURLTest = TEXT("ws://localhost:8000/ws/unreal_client");
+	WebSocket = FWebSocketsModule::Get().CreateWebSocket(ServerURLTest);
 
 	if (!WebSocket.IsValid())
 	{
@@ -56,9 +56,12 @@ void UPyInterSubSystem::ConnectWebSocket(const FString& ServerURL)
 	WebSocket->OnConnectionError().AddLambda([this](const FString& Error)
 	{
 		UE_LOG(LogTemp, Error, TEXT("WebSocket connection error: %s"), *Error);
+		UE_LOG(LogTemp, Error, TEXT("Detailed error information - Check if server supports WebSocket protocol"));
+		UE_LOG(LogTemp, Error, TEXT("Common causes: 1) Server not running 2) Wrong path 3) Server not WebSocket-enabled 4) Firewall blocking"));
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("WebSocket Error: %s"), *Error));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("Check server status and WebSocket support"));
 		}
 	});
 	
@@ -82,7 +85,8 @@ void UPyInterSubSystem::ConnectWebSocket(const FString& ServerURL)
 	});
 
 	WebSocket->Connect();
-	UE_LOG(LogTemp, Warning, TEXT("Connecting to WebSocket: %s"), *ServerURL);
+	UE_LOG(LogTemp, Warning, TEXT("Attempting WebSocket connection to: %s"), *ServerURL);
+	UE_LOG(LogTemp, Warning, TEXT("Make sure the server at localhost:8000 supports WebSocket protocol and path /ws/ue_client_01 exists"));
 }
 
 void UPyInterSubSystem::DisconnectWebSocket()
@@ -116,3 +120,44 @@ bool UPyInterSubSystem::IsConnected() const
 	return WebSocket.IsValid() && WebSocket->IsConnected();
 }
 
+// JSON��Ϣ�����ͷ��͹���ʵ��
+void UPyInterSubSystem::SendCreateNPCMessage(const FString& NPCId, const FString& InitContext)
+{
+	FCreateNPCMessage Message;
+	Message.npc_id = NPCId;
+	Message.init_context = InitContext;
+	Message.timestamp = GetCurrentTimestamp();
+	
+	FString JsonString = CreateNPCMessageToJson(Message);
+	SendMessage(JsonString);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Sent CreateNPC JSON: %s"), *JsonString);
+}
+
+FString UPyInterSubSystem::CreateNPCMessageToJson(const FCreateNPCMessage& Message)
+{
+	FString OutputString;
+	if (FJsonObjectConverter::UStructToJsonObjectString(Message, OutputString))
+	{
+		return OutputString;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to convert CreateNPCMessage to JSON"));
+		return TEXT("");
+	}
+}
+
+FString UPyInterSubSystem::StructToJson(const FString& StructName, const FString& StructData)
+{
+	// �����������ͨ�õĽṹ�嵽JSONת��
+	// ����UE5�ķ���ϵͳ���ƣ������ṩһ���򻯵�ʵ��
+	UE_LOG(LogTemp, Warning, TEXT("StructToJson called with: %s"), *StructName);
+	return StructData;
+}
+
+double UPyInterSubSystem::GetCurrentTimestamp() const
+{
+	// ����Unixʱ������룩
+	return FDateTime::UtcNow().ToUnixTimestamp();
+}
