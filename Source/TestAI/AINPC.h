@@ -27,9 +27,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC Settings")
 	FString InitContext;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC Settings")
+	FString ConfigFileName;
+
 	// WebSocket消息发送
 	UFUNCTION(BlueprintCallable, Category = "NPC Communication")
 	void SendCreateNPCMessage();
+
+	UFUNCTION(BlueprintCallable, Category = "NPC Communication")
+	void SendDeleteNPCMessage();
 
 	UFUNCTION(BlueprintCallable, Category = "NPC Communication")
 	bool TrySendMessage();

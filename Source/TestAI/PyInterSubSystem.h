@@ -28,6 +28,31 @@ struct FCreateNPCMessage
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString init_context;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString config_file_name;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FVector spawn_location = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FRotator spawn_rotation = FRotator::ZeroRotator;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	double timestamp = 0.0;
+};
+
+// ��ӦPython�˵�DeleteNPCMessage
+USTRUCT(BlueprintType)
+struct FDeleteNPCMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString type = TEXT("delete_npc");
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString npc_id;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	double timestamp = 0.0;
@@ -87,7 +112,22 @@ public:
 	void SendCreateNPCMessage(const FString& NPCId, const FString& InitContext);
 
 	UFUNCTION(BlueprintCallable, Category = "JSON Messages")
+	void SendCreateNPCMessageWithTransform(const FString& NPCId, const FString& InitContext, const FString& ConfigFileName, const FVector& Location, const FRotator& Rotation);
+
+	UFUNCTION(BlueprintCallable, Category = "JSON Messages")
+	void SendDeleteNPCMessage(const FString& NPCId);
+
+	UFUNCTION(BlueprintCallable, Category = "JSON Messages")
+	void SendPerceiveSceneMessage(const FString& RequestId, const TArray<FString>& FilterTypes, float MaxDistance);
+
+	UFUNCTION(BlueprintCallable, Category = "JSON Messages")
 	FString CreateNPCMessageToJson(const FCreateNPCMessage& Message);
+
+	UFUNCTION(BlueprintCallable, Category = "JSON Messages")
+	FString DeleteNPCMessageToJson(const FDeleteNPCMessage& Message);
+
+	UFUNCTION(BlueprintCallable, Category = "JSON Messages")
+	FString PerceiveSceneMessageToJson(const FPerceiveSceneMessage& Message);
 
 	// ͨ��JSON���л�����
 	UFUNCTION(BlueprintCallable, Category = "JSON Utils")

@@ -134,6 +134,48 @@ void UPyInterSubSystem::SendCreateNPCMessage(const FString& NPCId, const FString
 	UE_LOG(LogTemp, Warning, TEXT("Sent CreateNPC JSON: %s"), *JsonString);
 }
 
+void UPyInterSubSystem::SendCreateNPCMessageWithTransform(const FString& NPCId, const FString& InitContext, const FString& ConfigFileName, const FVector& Location, const FRotator& Rotation)
+{
+	FCreateNPCMessage Message;
+	Message.npc_id = NPCId;
+	Message.init_context = InitContext;
+	Message.config_file_name = ConfigFileName;
+	Message.spawn_location = Location;
+	Message.spawn_rotation = Rotation;
+	Message.timestamp = GetCurrentTimestamp();
+	
+	FString JsonString = CreateNPCMessageToJson(Message);
+	SendMessage(JsonString);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Sent Enhanced CreateNPC JSON: %s"), *JsonString);
+}
+
+void UPyInterSubSystem::SendDeleteNPCMessage(const FString& NPCId)
+{
+	FDeleteNPCMessage Message;
+	Message.npc_id = NPCId;
+	Message.timestamp = GetCurrentTimestamp();
+	
+	FString JsonString = DeleteNPCMessageToJson(Message);
+	SendMessage(JsonString);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Sent DeleteNPC JSON: %s"), *JsonString);
+}
+
+void UPyInterSubSystem::SendPerceiveSceneMessage(const FString& RequestId, const TArray<FString>& FilterTypes, float MaxDistance)
+{
+	FPerceiveSceneMessage Message;
+	Message.request_id = RequestId;
+	Message.filter_types = FilterTypes;
+	Message.max_distance = MaxDistance;
+	Message.timestamp = GetCurrentTimestamp();
+	
+	FString JsonString = PerceiveSceneMessageToJson(Message);
+	SendMessage(JsonString);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Sent PerceiveScene JSON: %s"), *JsonString);
+}
+
 FString UPyInterSubSystem::CreateNPCMessageToJson(const FCreateNPCMessage& Message)
 {
 	FString OutputString;
@@ -144,6 +186,34 @@ FString UPyInterSubSystem::CreateNPCMessageToJson(const FCreateNPCMessage& Messa
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to convert CreateNPCMessage to JSON"));
+		return TEXT("");
+	}
+}
+
+FString UPyInterSubSystem::DeleteNPCMessageToJson(const FDeleteNPCMessage& Message)
+{
+	FString OutputString;
+	if (FJsonObjectConverter::UStructToJsonObjectString(Message, OutputString))
+	{
+		return OutputString;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to convert DeleteNPCMessage to JSON"));
+		return TEXT("");
+	}
+}
+
+FString UPyInterSubSystem::PerceiveSceneMessageToJson(const FPerceiveSceneMessage& Message)
+{
+	FString OutputString;
+	if (FJsonObjectConverter::UStructToJsonObjectString(Message, OutputString))
+	{
+		return OutputString;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to convert PerceiveSceneMessage to JSON"));
 		return TEXT("");
 	}
 }

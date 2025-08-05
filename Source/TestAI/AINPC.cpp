@@ -1,3 +1,5 @@
+
+
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AINPC.h"
@@ -18,6 +20,7 @@ AAINPC::AAINPC()
 	// 设置默认NPCId
 	NPCId = FString::Printf(TEXT("NPC_%d"), GetUniqueID());
 	InitContext = TEXT("Default NPC initialization context");
+	ConfigFileName = TEXT("quick_create_template.json");
 }
 
 void AAINPC::BeginPlay()
@@ -32,6 +35,9 @@ void AAINPC::BeginPlay()
 
 void AAINPC::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// 发送删除NPC消息到Python服务器
+	SendDeleteNPCMessage();
+	
 	// 清理定时器
 	if (GetWorld() && RetryTimerHandle.IsValid())
 	{
@@ -47,17 +53,43 @@ void AAINPC::SendCreateNPCMessage()
 	{
 		if (PyInterSubSystem->IsConnected())
 		{
-			PyInterSubSystem->SendCreateNPCMessage(NPCId, InitContext);
+			// 使用增强版本的创建消息，包含位置信息和配置文件名
+			FVector CurrentLocation = GetActorLocation();
+			FRotator CurrentRotation = GetActorRotation();
+			
+			PyInterSubSystem->SendCreateNPCMessageWithTransform(NPCId, InitContext, ConfigFileName, CurrentLocation, CurrentRotation);
 			bMessageSent = true;
 			StopRetrying();
 			
-			UE_LOG(LogTemp, Warning, TEXT("NPC %s successfully sent create message"), *NPCId);
+			UE_LOG(LogTemp, Warning, TEXT("NPC %s successfully sent enhanced create message with transform and config"), *NPCId);
 			
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-					FString::Printf(TEXT("NPC %s connected to server"), *NPCId));
+					FString::Printf(TEXT("NPC %s connected to server with config %s"), *NPCId, *ConfigFileName));
 			}
+		}
+	}
+}
+
+void AAINPC::SendDeleteNPCMessage()
+{
+	if (UPyInterSubSystem* PyInterSubSystem = GetGameInstance()->GetSubsystem<UPyInterSubSystem>())
+	{
+		if (PyInterSubSystem->IsConnected())
+		{
+			PyInterSubSystem->SendDeleteNPCMessage(NPCId);
+			UE_LOG(LogTemp, Warning, TEXT("NPC %s sent delete message"), *NPCId);
+			
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
+					FString::Printf(TEXT("NPC %s deleted from server"), *NPCId));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NPC %s: WebSocket not connected, unable to send delete message"), *NPCId);
 		}
 	}
 }
